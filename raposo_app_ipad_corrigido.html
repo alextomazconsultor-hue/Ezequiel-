@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Raposo — O App</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+button,.tab,.bnav,.pick-slot,.char-pick-item,.poder,.voz-btn,.voz-narrar-btn{touch-action:manipulation;-webkit-user-select:none;user-select:none}
+body{background:#0d0d1f;font-family:sans-serif;min-height:100vh;overflow-x:hidden;color:#fff}
+.screen{display:none;padding-bottom:80px}
+.screen.on{display:block}
+
+/* HEADER */
+.header{text-align:center;padding:22px 16px 10px}
+.header h1{color:#5ee8f8;font-size:26px;font-weight:700;letter-spacing:2px}
+.header p{color:#666;font-size:12px;margin-top:3px}
+
+/* TABS */
+.tabs{display:flex;gap:8px;padding:0 16px 14px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:7px 16px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);color:#aaa;font-size:12px;cursor:pointer;background:rgba(255,255,255,0.04);transition:all 0.2s}
+.tab.on{color:#fff;border-color:transparent}
+.tab[data-id="raposo"].on{background:#E86A1A}
+.tab[data-id="miles"].on{background:#cc2020}
+.tab[data-id="robozinho"].on{background:#aa4400}
+.tab[data-id="herois"].on{background:#1a4a99}
+.tab[data-id="veneno"].on{background:#7a0000}
+
+/* CARDS */
+.cards{padding:0 16px 16px;display:none}
+.cards.on{display:block}
+.hero-card{border-radius:16px;overflow:hidden;margin-bottom:14px}
+.hero-top{padding:20px 16px 16px;display:flex;gap:14px;align-items:center}
+.hero-info h2{font-size:20px;font-weight:700;margin-bottom:3px}
+.hero-info .tipo{font-size:11px;opacity:0.65;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:7px}
+.hero-info .desc{font-size:12px;line-height:1.6;opacity:0.85}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px 14px}
+.stat{background:rgba(0,0,0,0.3);border-radius:10px;padding:11px}
+.stat-label{font-size:10px;opacity:0.55;margin-bottom:3px;letter-spacing:0.5px}
+.stat-value{font-size:12px;font-weight:600}
+.stat-bar{height:4px;border-radius:2px;margin-top:5px;background:rgba(255,255,255,0.1)}
+.stat-fill{height:4px;border-radius:2px;transition:width 1s ease}
+.hbox{background:rgba(0,0,0,0.25);margin:0 16px 12px;border-radius:12px;padding:13px}
+.hbox h3{font-size:11px;letter-spacing:1px;opacity:0.55;margin-bottom:9px;text-transform:uppercase}
+.hbox p{font-size:12px;line-height:1.75;opacity:0.82}
+.poder-list{display:flex;flex-wrap:wrap;gap:7px}
+.poder{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid rgba(255,255,255,0.18);cursor:pointer;transition:transform 0.1s}
+.poder:active{transform:scale(0.95)}
+
+/* BOTÃO DE VOZ */
+.voz-btn{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:5px 12px;font-size:11px;color:#ccc;cursor:pointer;transition:all 0.2s;margin-top:8px}
+.voz-btn:active{transform:scale(0.95)}
+.voz-btn.falando{background:rgba(94,232,248,0.18);border-color:#5ee8f8;color:#5ee8f8}
+.voz-btn .voz-icon{font-size:13px}
+.hbox-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.hbox-header h3{font-size:11px;letter-spacing:1px;opacity:0.55;text-transform:uppercase;margin:0}
+.voz-narrar-btn{display:flex;align-items:center;gap:6px;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);border-radius:20px;padding:7px 16px;font-size:12px;color:#ffd700;cursor:pointer;margin:0 16px 14px;transition:all 0.2s;width:calc(100% - 32px);justify-content:center}
+.voz-narrar-btn.falando{background:rgba(255,215,0,0.2);border-color:#ffd700}
+.voz-narrar-btn:active{transform:scale(0.97)}
+
+/* NIVEL BADGE */
+.nivel-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,220,0,0.15);border:1px solid rgba(255,220,0,0.4);border-radius:20px;padding:4px 10px;font-size:11px;color:#ffd700;margin-bottom:8px}
+.xp-bar-wrap{background:rgba(255,255,255,0.08);border-radius:4px;height:6px;margin:6px 0 10px;overflow:hidden}
+.xp-bar{height:6px;border-radius:4px;background:linear-gradient(90deg,#ffd700,#ffaa00);transition:width 0.8s ease}
+
+/* BATALHA */
+#screen-batalha{padding:0 0 80px}
+.batalha-header{background:#0a0a18;padding:18px 16px 12px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06)}
+.batalha-header h2{font-size:18px;font-weight:700;color:#ffd700}
+.batalha-header p{font-size:11px;color:#666;margin-top:3px}
+.pick-area{display:flex;gap:10px;padding:14px 16px;align-items:center;justify-content:center}
+.pick-slot{flex:1;background:rgba(255,255,255,0.04);border:1px dashed rgba(255,255,255,0.15);border-radius:14px;padding:12px 8px;text-align:center;cursor:pointer;transition:all 0.2s;min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.pick-slot.filled{border-style:solid;border-color:rgba(255,255,255,0.3)}
+.pick-slot h4{font-size:13px;font-weight:600}
+.pick-slot span{font-size:11px;color:#888}
+.vs-badge{font-size:22px;font-weight:700;color:#ffd700;flex-shrink:0}
+.btn-batalhar{width:calc(100% - 32px);margin:0 16px 14px;padding:14px;background:#ffd700;color:#1a1a00;font-size:15px;font-weight:700;border:none;border-radius:12px;cursor:pointer;transition:all 0.15s;letter-spacing:0.5px}
+.btn-batalhar:active{transform:scale(0.98)}
+.btn-batalhar:disabled{background:#444;color:#888;cursor:default}
+.hp-area{display:flex;gap:10px;padding:0 16px 12px}
+.hp-card{flex:1;background:rgba(0,0,0,0.3);border-radius:12px;padding:10px 12px}
+.hp-name{font-size:12px;font-weight:600;margin-bottom:5px}
+.hp-bar-wrap{background:rgba(255,255,255,0.1);border-radius:4px;height:8px;overflow:hidden}
+.hp-bar{height:8px;border-radius:4px;transition:width 0.6s ease}
+.hp-num{font-size:11px;color:#888;margin-top:4px}
+.atk-btn{padding:11px 8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:12px;color:#fff;font-size:12px;font-weight:500;cursor:pointer;transition:all 0.15s;text-align:center;line-height:1.4}
+.atk-btn:active{transform:scale(0.96);background:rgba(255,255,255,0.14)}
+.atk-btn.especial{border-color:rgba(255,215,0,0.4);background:rgba(255,215,0,0.08);color:#ffd700}
+@keyframes fadeIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes bounce{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+
+/* PICKER MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.modal-box{background:#131325;border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-width:480px}
+.modal-box h3{font-size:15px;font-weight:700;margin-bottom:14px;text-align:center;color:#ffd700}
+.char-pick-list{display:flex;flex-direction:column;gap:8px}
+.char-pick-item{display:flex;align-items:center;gap:12px;padding:11px 14px;background:rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;border:1px solid rgba(255,255,255,0.08);transition:background 0.15s}
+.char-pick-item:active{background:rgba(255,255,255,0.12)}
+.char-pick-item .cpname{font-size:14px;font-weight:600}
+.char-pick-item .cptipo{font-size:11px;opacity:0.55}
+.modal-cancel{width:100%;margin-top:12px;padding:12px;background:rgba(255,255,255,0.07);border:none;color:#aaa;border-radius:12px;font-size:14px;cursor:pointer}
+
+/* EVOLUCAO */
+#screen-evolucao{padding:0 0 80px}
+.evo-header{background:#0a0a18;padding:18px 16px 12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.evo-header h2{font-size:18px;font-weight:700;color:#ffd700}
+.evo-header p{font-size:11px;color:#666;margin-top:3px}
+.evo-char-tabs{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;scrollbar-width:none}
+.evo-char-tabs::-webkit-scrollbar{display:none}
+.evo-tab{flex-shrink:0;padding:7px 14px;border-radius:20px;border:1px solid rgba(255,255,255,0.12);color:#aaa;font-size:12px;cursor:pointer;background:rgba(255,255,255,0.04);transition:all 0.2s}
+.evo-tab.on{background:#ffd700;color:#1a1a00;border-color:#ffd700;font-weight:700}
+.evo-content{padding:0 16px 16px;display:none}
+.evo-content.on{display:block}
+.evo-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;margin-bottom:12px}
+.evo-card h4{font-size:13px;font-weight:600;margin-bottom:4px}
+.evo-card p{font-size:12px;color:#888;line-height:1.6;margin-bottom:10px}
+.btn-evoluir{padding:9px 20px;border-radius:20px;background:#ffd700;color:#1a1a00;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all 0.15s}
+.btn-evoluir:active{transform:scale(0.96)}
+.btn-evoluir:disabled{background:#333;color:#666;cursor:default}
+.evo-done{font-size:11px;color:#88ff88;margin-top:6px}
+.evo-stat-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+.evo-stat-row:last-child{border:none}
+.evo-stat-name{font-size:12px;color:#aaa}
+.evo-stat-val{font-size:12px;font-weight:600;color:#ffd700}
+.evo-pts{text-align:center;padding:12px;background:rgba(255,220,0,0.08);border-radius:10px;margin-bottom:12px}
+.evo-pts span{font-size:22px;font-weight:700;color:#ffd700}
+.evo-pts p{font-size:11px;color:#888;margin-top:2px}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#0d0d1f;border-top:1px solid rgba(255,255,255,0.08);display:flex;padding:8px 0 14px}
+.bnav{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:5px 0}
+.bnav-icon{font-size:20px;opacity:0.35;transition:opacity 0.2s}
+.bnav span{font-size:9px;color:#777;transition:color 0.2s}
+.bnav.on .bnav-icon{opacity:1}
+.bnav.on span{color:#fff;font-weight:600}
+</style>
+</head>
+<body>
+
+<!-- ===== PERSONAGENS ===== -->
+<div class="screen on" id="screen-personagens">
+<div class="header">
+  <h1>RAPOSO</h1>
+  <p>e a Espada das Gerações · Parte 2</p>
+</div>
+<div class="tabs">
+  <div class="tab on" data-id="raposo" onclick="showChar('raposo')">🦊 Raposo</div>
+  <div class="tab" data-id="miles" onclick="showChar('miles')">🕷️ Miles</div>
+  <div class="tab" data-id="robozinho" onclick="showChar('robozinho')">🤖 Robozinho</div>
+  <div class="tab" data-id="herois" onclick="showChar('herois')">🛡️ Heróis</div>
+  <div class="tab" data-id="veneno" onclick="showChar('veneno')">☠️ Veneno</div>
+</div>
+
+<!-- RAPOSO -->
+<div class="cards on" id="card-raposo">
+  <div class="hero-card">
+    <div class="hero-top" style="background:#c85a10">
+      <div style="flex-shrink:0">
+        <svg width="90" height="120" viewBox="0 0 100 130">
+          <path d="M12,72 Q2,60 5,46 Q8,35 18,40" fill="none" stroke="#E86A1A" stroke-width="5" stroke-linecap="round"/>
+          <path d="M18,40 Q23,35 22,43" fill="none" stroke="#f5c9a0" stroke-width="3" stroke-linecap="round"/>
+          <rect x="32" y="85" width="13" height="25" rx="2" fill="#E86A1A" stroke="#c85a10" stroke-width="0.8"/>
+          <rect x="52" y="85" width="13" height="25" rx="2" fill="#E86A1A" stroke="#c85a10" stroke-width="0.8"/>
+          <rect x="28" y="107" width="18" height="7" rx="2" fill="#c85a10"/>
+          <rect x="52" y="107" width="18" height="7" rx="2" fill="#c85a10"/>
+          <rect x="28" y="52" width="44" height="38" rx="5" fill="#E86A1A" stroke="#c85a10" stroke-width="1"/>
+          <ellipse cx="50" cy="71" rx="13" ry="15" fill="#f5c9a0"/>
+          <line x1="28" y1="62" x2="14" y2="76" stroke="#E86A1A" stroke-width="6" stroke-linecap="round"/>
+          <line x1="15" y1="74" x2="11" y2="82" stroke="#8b0000" stroke-width="2" stroke-linecap="round"/>
+          <line x1="72" y1="62" x2="88" y2="76" stroke="#E86A1A" stroke-width="6" stroke-linecap="round"/>
+          <rect x="86" y="56" width="6" height="24" rx="1" fill="#5ee8f8" stroke="#3ab8d8" stroke-width="0.8"/>
+          <rect x="82" y="76" width="14" height="4" rx="1" fill="#3ab8d8"/>
+          <polygon points="89,56 86,46 92,46" fill="#7af0ff" stroke="#3ab8d8" stroke-width="0.8"/>
+          <rect x="30" y="24" width="40" height="32" rx="5" fill="#E86A1A" stroke="#c85a10" stroke-width="1"/>
+          <polygon points="30,32 20,10 44,22" fill="#E86A1A" stroke="#c85a10" stroke-width="0.8"/>
+          <polygon points="70,32 80,10 56,22" fill="#E86A1A" stroke="#c85a10" stroke-width="0.8"/>
+          <rect x="36" y="32" width="8" height="8" rx="1" fill="#222"/>
+          <rect x="56" y="32" width="8" height="8" rx="1" fill="#222"/>
+          <rect x="47" y="44" width="6" height="4" rx="1" fill="#8b3a00"/>
+        </svg>
+      </div>
+      <div class="hero-info">
+        <div class="nivel-badge" id="nivel-badge-raposo">⭐ Nível <span id="nivel-raposo">1</span></div>
+        <h2>Raposo</h2>
+        <div class="tipo">guerreiro · herói</div>
+        <div class="desc">Perdeu os pais para o Veneno. Carrega a espada da família e sonha em ser herói.</div>
+      </div>
+    </div>
+    <div style="background:#a84800">
+      <div class="xp-bar-wrap" style="margin:0 16px;padding-top:8px"><div class="xp-bar" id="xp-raposo" style="width:20%"></div></div>
+      <div style="display:flex;justify-content:space-between;padding:0 16px 10px"><span style="font-size:10px;color:#ffd700">XP</span><span style="font-size:10px;color:#ffd700" id="xp-txt-raposo">20 / 100</span></div>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-label">VELOCIDADE</div><div class="stat-value" id="sv-raposo-vel">95</div><div class="stat-bar"><div class="stat-fill" id="sb-raposo-vel" style="width:95%;background:#5ee8f8"></div></div></div>
+        <div class="stat"><div class="stat-label">FORÇA</div><div class="stat-value" id="sv-raposo-for">72</div><div class="stat-bar"><div class="stat-fill" id="sb-raposo-for" style="width:72%;background:#5ee8f8"></div></div></div>
+        <div class="stat"><div class="stat-label">CORAGEM</div><div class="stat-value" id="sv-raposo-cor">99</div><div class="stat-bar"><div class="stat-fill" id="sb-raposo-cor" style="width:99%;background:#ffd700"></div></div></div>
+        <div class="stat"><div class="stat-label">ESPADA</div><div class="stat-value" id="sv-raposo-esp">88</div><div class="stat-bar"><div class="stat-fill" id="sb-raposo-esp" style="width:88%;background:#5ee8f8"></div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="hbox"><div class="hbox-header"><h3>história</h3><div class="voz-btn" onclick="falar(this,'Raposo. Quando era bebê, o Veneno atacou sua família. Raposo pegou a espada e cortou o braço do Veneno, mas perdeu parte da mão esquerda. Seus pais não sobreviveram. Ficou sozinho com seus três pets e a espada da família até apertar o botão misterioso.')"><span class="voz-icon">🔊</span> ouvir</div></div><p>Quando era bebê, o Veneno atacou sua família. Raposo pegou a espada e cortou o braço do Veneno, mas perdeu parte da mão esquerda. Seus pais não sobreviveram. Ficou sozinho com seus três pets e a espada da família até apertar o botão misterioso.</p></div>
+  <div class="hbox"><div class="hbox-header"><h3>poderes</h3><div class="voz-btn" onclick="falar(this,'Poderes do Raposo. Espada de diamante herdada da família. Super velocidade de raposa. Instinto aguçado. E a cicatriz na mão esquerda, marca do combate com o Veneno.')"><span class="voz-icon">🔊</span> ouvir</div></div><div class="poder-list">
+    <div class="poder" style="background:rgba(94,232,248,0.15);border-color:#5ee8f8">⚔️ Espada diamante</div>
+    <div class="poder" style="background:rgba(255,120,0,0.15);border-color:#ff7800">⚡ Super velocidade</div>
+    <div class="poder" style="background:rgba(200,90,16,0.15);border-color:#c85a10">🦊 Instinto raposa</div>
+    <div class="poder" style="background:rgba(139,0,0,0.15);border-color:#8b0000">🩹 Cicatriz na mão</div>
+  </div></div>
+</div>
+
+<!-- MILES -->
+<div class="cards" id="card-miles">
+  <div class="hero-card">
+    <div class="hero-top" style="background:#7a0000">
+      <div style="flex-shrink:0">
+        <svg width="90" height="120" viewBox="0 0 100 130">
+          <rect x="32" y="90" width="14" height="26" rx="2" fill="#1a1a1a"/>
+          <rect x="54" y="90" width="14" height="26" rx="2" fill="#1a1a1a"/>
+          <rect x="28" y="52" width="44" height="42" rx="5" fill="#cc2020" stroke="#991010" stroke-width="1"/>
+          <line x1="50" y1="52" x2="50" y2="94" stroke="#1a1a1a" stroke-width="1" opacity="0.5"/>
+          <line x1="28" y1="73" x2="72" y2="73" stroke="#1a1a1a" stroke-width="1" opacity="0.5"/>
+          <rect x="14" y="56" width="16" height="9" rx="3" fill="#cc2020"/>
+          <rect x="70" y="56" width="16" height="9" rx="3" fill="#cc2020"/>
+          <circle cx="12" cy="60" r="7" fill="#1a1a1a" stroke="#cc2020" stroke-width="1"/>
+          <circle cx="88" cy="60" r="7" fill="#1a1a1a" stroke="#cc2020" stroke-width="1"/>
+          <path d="M5,60 Q-2,46 6,32" fill="none" stroke="#ccc" stroke-width="1.5" opacity="0.7"/>
+          <path d="M95,60 Q102,46 94,32" fill="none" stroke="#ccc" stroke-width="1.5" opacity="0.7"/>
+          <ellipse cx="50" cy="30" rx="22" ry="24" fill="#1a1a1a" stroke="#333" stroke-width="1"/>
+          <ellipse cx="38" cy="26" rx="10" ry="7" fill="#cc2020"/>
+          <ellipse cx="62" cy="26" rx="10" ry="7" fill="#cc2020"/>
+          <ellipse cx="38" cy="26" rx="7" ry="5" fill="white"/>
+          <ellipse cx="62" cy="26" rx="7" ry="5" fill="white"/>
+        </svg>
+      </div>
+      <div class="hero-info">
+        <div class="nivel-badge" id="nivel-badge-miles">⭐ Nível <span id="nivel-miles">1</span></div>
+        <h2>Miles Morales</h2>
+        <div class="tipo">herói substituto · aranha</div>
+        <div class="desc">Herói já reconhecido na base. Solta teia pelas mãos. Criou o Robozinho com o Raposo.</div>
+      </div>
+    </div>
+    <div style="background:#5a0000">
+      <div class="xp-bar-wrap" style="margin:0 16px;padding-top:8px"><div class="xp-bar" id="xp-miles" style="width:20%"></div></div>
+      <div style="display:flex;justify-content:space-between;padding:0 16px 10px"><span style="font-size:10px;color:#ffd700">XP</span><span style="font-size:10px;color:#ffd700" id="xp-txt-miles">20 / 100</span></div>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-label">AGILIDADE</div><div class="stat-value" id="sv-miles-agi">98</div><div class="stat-bar"><div class="stat-fill" id="sb-miles-agi" style="width:98%;background:#ff6060"></div></div></div>
+        <div class="stat"><div class="stat-label">TEIA</div><div class="stat-value" id="sv-miles-tei">90</div><div class="stat-bar"><div class="stat-fill" id="sb-miles-tei" style="width:90%;background:#ff6060"></div></div></div>
+        <div class="stat"><div class="stat-label">EXPERIÊNCIA</div><div class="stat-value" id="sv-miles-exp">85</div><div class="stat-bar"><div class="stat-fill" id="sb-miles-exp" style="width:85%;background:#ffaa00"></div></div></div>
+        <div class="stat"><div class="stat-label">TRABALHO TIME</div><div class="stat-value" id="sv-miles-tim">60</div><div class="stat-bar"><div class="stat-fill" id="sb-miles-tim" style="width:60%;background:#ffaa00"></div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="hbox"><div class="hbox-header"><h3>história</h3><div class="voz-btn" onclick="falar(this,'Miles Morales. Miles é o herói substituto da base. Diferente do Raposo, ele já é reconhecido como herói. Os dois dividem a mesma base e precisam aprender a confiar um no outro.')"><span class="voz-icon">🔊</span> ouvir</div></div><p>Miles é o herói substituto da base. Diferente do Raposo, ele já é reconhecido como herói. Os dois dividem a mesma base e precisam aprender a confiar um no outro.</p></div>
+  <div class="hbox"><div class="hbox-header"><h3>poderes</h3><div class="voz-btn" onclick="falar(this,'Poderes do Miles. Teia pelas mãos. Super agilidade. Camuflagem. E choque bioelétrico.')"><span class="voz-icon">🔊</span> ouvir</div></div><div class="poder-list">
+    <div class="poder" style="background:rgba(204,32,32,0.15);border-color:#cc2020">🕸️ Teia pelas mãos</div>
+    <div class="poder" style="background:rgba(255,100,0,0.15);border-color:#ff6400">⚡ Super agilidade</div>
+    <div class="poder" style="background:rgba(200,200,0,0.15);border-color:#cccc00">🌑 Camuflagem</div>
+    <div class="poder" style="background:rgba(100,180,255,0.15);border-color:#64b4ff">⚡ Choque bioelétrico</div>
+  </div></div>
+</div>
+
+<!-- ROBOZINHO -->
+<div class="cards" id="card-robozinho">
+  <div class="hero-card">
+    <div class="hero-top" style="background:#5a1a00">
+      <div style="flex-shrink:0">
+        <svg width="90" height="120" viewBox="0 0 100 130">
+          <ellipse cx="50" cy="120" rx="22" ry="5" fill="#110500" opacity="0.4"/>
+          <rect x="22" y="100" width="56" height="12" rx="6" fill="#4a0e00"/>
+          <circle cx="34" cy="115" r="6" fill="#222" stroke="#444" stroke-width="0.8"/>
+          <circle cx="50" cy="115" r="6" fill="#222" stroke="#444" stroke-width="0.8"/>
+          <circle cx="66" cy="115" r="6" fill="#222" stroke="#444" stroke-width="0.8"/>
+          <ellipse cx="50" cy="72" rx="32" ry="36" fill="#6a1000" stroke="#3e0800" stroke-width="1.5"/>
+          <ellipse cx="50" cy="70" rx="24" ry="28" fill="#8b1500"/>
+          <circle cx="18" cy="68" r="9" fill="#111" stroke="#333" stroke-width="0.8"/>
+          <line x1="18" y1="60" x2="18" y2="76" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="10" y1="68" x2="26" y2="68" stroke="#444" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="40" cy="68" r="11" fill="#0a0a0a" stroke="#cc2200" stroke-width="1.5"/>
+          <circle cx="40" cy="68" r="6" fill="#0a1520"/>
+          <circle cx="60" cy="68" r="11" fill="#0a0a0a" stroke="#cc2200" stroke-width="1.5"/>
+          <circle cx="60" cy="68" r="6" fill="#0a1520"/>
+          <rect x="44" y="82" width="12" height="5" rx="2.5" fill="#888"/>
+          <rect x="46" y="87" width="8" height="12" rx="1.5" fill="#777"/>
+          <ellipse cx="50" cy="101" rx="3" ry="5" fill="#ff5500" opacity="0.8"/>
+          <rect x="22" y="36" width="56" height="18" rx="4" fill="#1e1e1e" stroke="#333" stroke-width="0.8"/>
+          <ellipse cx="50" cy="36" rx="30" ry="10" fill="#222"/>
+          <path d="M78,72 Q88,66 90,56 Q92,46 84,42" fill="none" stroke="#5ee8f8" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.9"/>
+          <circle cx="84" cy="41" r="4" fill="#5ee8f8" opacity="0.9"/>
+        </svg>
+      </div>
+      <div class="hero-info">
+        <div class="nivel-badge" id="nivel-badge-robozinho">⭐ Nível <span id="nivel-robozinho">1</span></div>
+        <h2>Robozinho</h2>
+        <div class="tipo">robô · parceiro do time</div>
+        <div class="desc">Criado por Raposo e Miles. Tem vida própria com limites. Fio de memória azul guarda tudo que viveu.</div>
+      </div>
+    </div>
+    <div style="background:#3a1000">
+      <div class="xp-bar-wrap" style="margin:0 16px;padding-top:8px"><div class="xp-bar" id="xp-robozinho" style="width:20%"></div></div>
+      <div style="display:flex;justify-content:space-between;padding:0 16px 10px"><span style="font-size:10px;color:#ffd700">XP</span><span style="font-size:10px;color:#ffd700" id="xp-txt-robozinho">20 / 100</span></div>
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-label">FOGO</div><div class="stat-value" id="sv-robozinho-fog">70</div><div class="stat-bar"><div class="stat-fill" id="sb-robozinho-fog" style="width:70%;background:#ff6600"></div></div></div>
+        <div class="stat"><div class="stat-label">VISÃO BINÓCULO</div><div class="stat-value" id="sv-robozinho-vis">95</div><div class="stat-bar"><div class="stat-fill" id="sb-robozinho-vis" style="width:95%;background:#5ee8f8"></div></div></div>
+        <div class="stat"><div class="stat-label">MEMÓRIA</div><div class="stat-value" id="sv-robozinho-mem">88</div><div class="stat-bar"><div class="stat-fill" id="sb-robozinho-mem" style="width:88%;background:#5ee8f8"></div></div></div>
+        <div class="stat"><div class="stat-label">TAMANHO</div><div class="stat-value">MINI</div><div class="stat-bar"><div class="stat-fill" style="width:15%;background:#aaa"></div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="hbox"><div class="hbox-header"><h3>história</h3><div class="voz-btn" onclick="falar(this,'Robozinho. Fusão de binóculo, atirador e ventilador com uma touca. Tem vida própria mas com limites programados pelo Raposo. O fio de memória azul guarda tudo que ele viveu. O Raposo pode removê-lo e reinstalar quando precisar.')"><span class="voz-icon">🔊</span> ouvir</div></div><p>Fusão de binóculo, atirador e ventilador com uma touca. Tem vida própria mas com limites programados. O fio de memória azul guarda tudo. O Raposo pode removê-lo e reinstalar quando precisar.</p></div>
+  <div class="hbox"><div class="hbox-header"><h3>poderes</h3><div class="voz-btn" onclick="falar(this,'Poderes do Robozinho. Atirador de fogo. Binóculo integrado de alta precisão. Ventilador tornado. E fio de memória removível.')"><span class="voz-icon">🔊</span> ouvir</div></div><div class="poder-list">
+    <div class="poder" style="background:rgba(255,100,0,0.15);border-color:#ff6400">🔥 Atirador de fogo</div>
+    <div class="poder" style="background:rgba(94,232,248,0.15);border-color:#5ee8f8">👁️ Binóculo integrado</div>
+    <div class="poder" style="background:rgba(100,100,100,0.2);border-color:#888">💨 Ventilador</div>
+    <div class="poder" style="background:rgba(94,232,248,0.2);border-color:#5ee8f8">🧠 Fio de memória</div>
+  </div></div>
+</div>
+
+<!-- HEROIS -->
+<div class="cards" id="card-herois">
+  <div class="hero-card">
+    <div class="hero-top" style="background:#0d2a70">
+      <div style="flex-shrink:0">
+        <svg width="90" height="120" viewBox="0 0 100 130">
+          <rect x="32" y="88" width="14" height="28" rx="2" fill="#2060c0"/>
+          <rect x="54" y="88" width="14" height="28" rx="2" fill="#2060c0"/>
+          <rect x="28" y="50" width="44" height="42" rx="5" fill="#2060c0" stroke="#1040a0" stroke-width="1"/>
+          <text x="50" y="78" text-anchor="middle" font-size="16" fill="#80c0ff" font-family="sans-serif" font-weight="700">H</text>
+          <rect x="14" y="55" width="16" height="9" rx="3" fill="#2060c0"/>
+          <rect x="70" y="55" width="16" height="9" rx="3" fill="#2060c0"/>
+          <rect x="16" y="62" width="12" height="8" rx="2" fill="#3a80d0" stroke="#80c0ff" stroke-width="0.8"/>
+          <circle cx="50" cy="28" r="22" fill="#2060c0" stroke="#1040a0" stroke-width="1"/>
+          <rect x="28" y="20" width="44" height="14" rx="3" fill="#1040a0" opacity="0.7"/>
+          <rect x="30" y="21" width="40" height="10" rx="2" fill="#80c0ff" opacity="0.85"/>
+        </svg>
+      </div>
+      <div class="hero-info">
+        <div class="nivel-badge">⭐ Nível 5</div>
+        <h2>Os Heróis</h2>
+        <div class="tipo">guardiões · base secreta</div>
+        <div class="desc">Guardam a paz. Monitoram quem entra na base. Ainda avaliam se confiam no Raposo.</div>
+      </div>
+    </div>
+    <div style="background:#0a1e55">
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-label">FORÇA</div><div class="stat-value">85</div><div class="stat-bar"><div class="stat-fill" style="width:85%;background:#80c0ff"></div></div></div>
+        <div class="stat"><div class="stat-label">TECNOLOGIA</div><div class="stat-value">92</div><div class="stat-bar"><div class="stat-fill" style="width:92%;background:#80c0ff"></div></div></div>
+        <div class="stat"><div class="stat-label">ESTRATÉGIA</div><div class="stat-value">90</div><div class="stat-bar"><div class="stat-fill" style="width:90%;background:#aaddff"></div></div></div>
+        <div class="stat"><div class="stat-label">CONFIA NO RAPOSO</div><div class="stat-value">40</div><div class="stat-bar"><div class="stat-fill" style="width:40%;background:#ff8888"></div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="hbox"><div class="hbox-header"><h3>sobre</h3><div class="voz-btn" onclick="falar(this,'Os Heróis da base. Tiveram visões de vilões disfarçados tentando infiltrar a base. Usaram fumaça azul para testar o Raposo e o colocaram em uma casa idêntica à dele para monitorá-lo. Ainda não sabem se podem confiar nele.')"><span class="voz-icon">🔊</span> ouvir</div></div><p>Tiveram visões de vilões disfarçados. Usaram fumaça azul para testar o Raposo e o colocaram em uma casa idêntica à dele para monitorá-lo.</p></div>
+  <div class="hbox"><div class="hbox-header"><h3>equipamentos</h3><div class="voz-btn" onclick="falar(this,'Equipamentos dos heróis. Fumaça azul neutralizante. Sistema de monitoramento. Casa duplicada para vigilância. E visões do futuro.')"><span class="voz-icon">🔊</span> ouvir</div></div><div class="poder-list">
+    <div class="poder" style="background:rgba(128,192,255,0.15);border-color:#80c0ff">💨 Fumaça azul</div>
+    <div class="poder" style="background:rgba(0,100,200,0.15);border-color:#4080cc">📡 Monitoramento</div>
+    <div class="poder" style="background:rgba(50,50,200,0.15);border-color:#5050cc">🏠 Casa duplicada</div>
+    <div class="poder" style="background:rgba(100,150,255,0.15);border-color:#6496ff">🔮 Visões futuras</div>
+  </div></div>
+</div>
+
+<!-- VENENO -->
+<div class="cards" id="card-veneno">
+  <div class="hero-card">
+    <div class="hero-top" style="background:#4a0000">
+      <div style="flex-shrink:0">
+        <svg width="90" height="120" viewBox="0 0 100 130">
+          <ellipse cx="50" cy="75" rx="38" ry="46" fill="#6a0000" stroke="#3e0000" stroke-width="1.5"/>
+          <ellipse cx="28" cy="50" rx="20" ry="24" fill="#6a0000"/>
+          <ellipse cx="72" cy="48" rx="18" ry="22" fill="#6a0000"/>
+          <ellipse cx="50" cy="40" rx="14" ry="18" fill="#6a0000"/>
+          <ellipse cx="18" cy="90" rx="9" ry="14" fill="#6a0000"/>
+          <ellipse cx="82" cy="95" rx="8" ry="12" fill="#6a0000"/>
+          <ellipse cx="36" cy="68" rx="13" ry="15" fill="white"/>
+          <ellipse cx="64" cy="66" rx="13" ry="15" fill="white"/>
+          <ellipse cx="38" cy="70" rx="9" ry="11" fill="#aa0000"/>
+          <ellipse cx="62" cy="68" rx="9" ry="11" fill="#aa0000"/>
+          <rect x="30" y="84" width="9" height="15" rx="1.5" fill="white"/>
+          <rect x="42" y="84" width="9" height="17" rx="1.5" fill="white"/>
+          <rect x="54" y="84" width="9" height="15" rx="1.5" fill="white"/>
+          <rect x="65" y="84" width="8" height="13" rx="1.5" fill="white"/>
+        </svg>
+      </div>
+      <div class="hero-info">
+        <div class="nivel-badge">☠️ Perigo Máximo</div>
+        <h2>Veneno</h2>
+        <div class="tipo">gosma · antagonista</div>
+        <div class="desc">Experimento escapado. Atacou a família do Raposo. Se dividiu em cópia boa e cópia má.</div>
+      </div>
+    </div>
+    <div style="background:#330000">
+      <div class="stats-grid">
+        <div class="stat"><div class="stat-label">PERIGO</div><div class="stat-value">99</div><div class="stat-bar"><div class="stat-fill" style="width:99%;background:#ff3333"></div></div></div>
+        <div class="stat"><div class="stat-label">FORÇA</div><div class="stat-value">95</div><div class="stat-bar"><div class="stat-fill" style="width:95%;background:#ff3333"></div></div></div>
+        <div class="stat"><div class="stat-label">CÓPIA BOA</div><div class="stat-value">50</div><div class="stat-bar"><div class="stat-fill" style="width:50%;background:#88ff88"></div></div></div>
+        <div class="stat"><div class="stat-label">CÓPIA MÁ</div><div class="stat-value">100</div><div class="stat-bar"><div class="stat-fill" style="width:100%;background:#ff3333"></div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="hbox"><div class="hbox-header"><h3>história</h3><div class="voz-btn" onclick="falar(this,'Veneno. Experimento que escapou de uma cápsula secreta. Atacou a família do Raposo quando ele era bebê. Raposo cortou seu braço com a espada, mas o Veneno arrancou parte da mão dele com força absurda. Depois se dividiu em duas cópias: uma boa e uma má.')"><span class="voz-icon">🔊</span> ouvir</div></div><p>Experimento que escapou de uma cápsula. Atacou a família do Raposo quando bebê. Raposo cortou seu braço mas o Veneno arrancou parte da mão. Depois se dividiu em duas cópias.</p></div>
+  <div class="hbox"><div class="hbox-header"><h3>habilidades</h3><div class="voz-btn" onclick="falar(this,'Habilidades do Veneno. Dentes afiados venenosos. Gosma corrosiva. Cópia boa que guarda a mão do Raposo. Cópia má extremamente perigosa. E força absurda.')"><span class="voz-icon">🔊</span> ouvir</div></div><div class="poder-list">
+    <div class="poder" style="background:rgba(139,0,0,0.3);border-color:#8b0000">🦷 Dentes afiados</div>
+    <div class="poder" style="background:rgba(100,0,0,0.3);border-color:#640000">🫧 Gosma corrosiva</div>
+    <div class="poder" style="background:rgba(0,150,0,0.15);border-color:#009600">👐 Cópia boa</div>
+    <div class="poder" style="background:rgba(180,0,0,0.2);border-color:#b40000">👿 Cópia má</div>
+  </div></div>
+</div>
+</div>
+
+<!-- ===== BATALHA POKEMON ===== -->
+<div class="screen" id="screen-batalha">
+  <div class="batalha-header">
+    <h2>⚔️ Arena de Batalha</h2>
+    <p>Escolha os lutadores e ataque!</p>
+  </div>
+
+  <!-- FASE 1: ESCOLHA -->
+  <div id="fase-escolha">
+    <div class="pick-area">
+      <div class="pick-slot" id="slot1" onclick="openPicker(1)">
+        <span style="font-size:28px">❓</span>
+        <h4>Lutador 1</h4>
+        <span>toque para escolher</span>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="pick-slot" id="slot2" onclick="openPicker(2)">
+        <span style="font-size:28px">❓</span>
+        <h4>Lutador 2</h4>
+        <span>toque para escolher</span>
+      </div>
+    </div>
+    <button class="btn-batalhar" id="btn-batalhar" onclick="comecarBatalha()" disabled>Escolha os lutadores</button>
+  </div>
+
+  <!-- FASE 2: ARENA -->
+  <div id="fase-arena" style="display:none">
+    <!-- HP BARS -->
+    <div class="hp-area">
+      <div class="hp-card">
+        <div class="hp-name" id="hp-name1">—</div>
+        <div class="hp-bar-wrap"><div class="hp-bar" id="hp-bar1" style="width:100%;background:#44cc44"></div></div>
+        <div class="hp-num" id="hp-num1">100 HP</div>
+      </div>
+      <div class="hp-card">
+        <div class="hp-name" id="hp-name2">—</div>
+        <div class="hp-bar-wrap"><div class="hp-bar" id="hp-bar2" style="width:100%;background:#44cc44"></div></div>
+        <div class="hp-num" id="hp-num2">100 HP</div>
+      </div>
+    </div>
+
+    <!-- ARENA VISUAL -->
+    <div id="arena-visual" style="background:rgba(0,0,0,0.35);margin:0 16px 12px;border-radius:14px;padding:16px;min-height:90px;display:flex;align-items:center;justify-content:center;gap:20px">
+      <div style="text-align:center">
+        <div id="sprite1" style="font-size:52px;transition:transform 0.15s">❓</div>
+        <div id="arena-name1" style="font-size:11px;color:#aaa;margin-top:4px">—</div>
+      </div>
+      <div id="dmg-badge" style="font-size:22px;font-weight:700;color:#ffd700;opacity:0;transition:opacity 0.3s;min-width:60px;text-align:center"></div>
+      <div style="text-align:center">
+        <div id="sprite2" style="font-size:52px;transition:transform 0.15s">❓</div>
+        <div id="arena-name2" style="font-size:11px;color:#aaa;margin-top:4px">—</div>
+      </div>
+    </div>
+
+    <!-- MENSAGEM DE AÇÃO -->
+    <div id="msg-acao" style="background:rgba(0,0,0,0.4);margin:0 16px 12px;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.6;min-height:48px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <span id="msg-texto">Escolha um ataque!</span>
+      <button onclick="narrarMensagem()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:5px 12px;color:#ccc;font-size:11px;cursor:pointer;flex-shrink:0">🔊 ouvir</button>
+    </div>
+
+    <!-- BOTÕES DE ATAQUE (vez do jogador) -->
+    <div id="area-ataques" style="padding:0 16px 12px">
+      <div style="font-size:11px;color:#888;margin-bottom:8px;letter-spacing:0.5px;text-transform:uppercase">Escolha o ataque</div>
+      <div id="lista-ataques" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+    </div>
+
+    <!-- BOTÃO INIMIGO ATACANDO -->
+    <div id="area-inimigo" style="display:none;padding:0 16px 12px">
+      <button onclick="inimigoAtaca()" style="width:100%;padding:13px;background:rgba(200,0,0,0.2);border:1px solid rgba(255,80,80,0.4);border-radius:12px;color:#ff8888;font-size:13px;font-weight:600;cursor:pointer">⚔️ Ver ataque do inimigo</button>
+    </div>
+
+    <!-- RESULTADO FINAL -->
+    <div id="area-resultado" style="display:none;padding:0 16px 14px">
+      <div id="resultado-box" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.3);border-radius:14px;padding:16px;text-align:center">
+        <div id="resultado-emoji" style="font-size:40px;margin-bottom:8px">🏆</div>
+        <div id="resultado-texto" style="font-size:16px;font-weight:700;color:#ffd700;margin-bottom:6px"></div>
+        <div id="resultado-sub" style="font-size:12px;color:#aaa;margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button onclick="narrarResultado()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:20px;padding:8px 16px;color:#ccc;font-size:12px;cursor:pointer">🔊 Ouvir resultado</button>
+          <button onclick="resetarBatalha()" style="background:#ffd700;border:none;border-radius:20px;padding:8px 16px;color:#1a1a00;font-size:12px;font-weight:700;cursor:pointer">🔄 Nova batalha</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EVOLUÇÃO ===== -->
+<div class="screen" id="screen-evolucao">
+  <div class="evo-header">
+    <h2>⬆️ Evolução</h2>
+    <p>Use pontos de XP para evoluir seus personagens</p>
+  </div>
+  <div class="evo-char-tabs">
+    <div class="evo-tab on" onclick="showEvo('raposo')">🦊 Raposo</div>
+    <div class="evo-tab" onclick="showEvo('miles')">🕷️ Miles</div>
+    <div class="evo-tab" onclick="showEvo('robozinho')">🤖 Robozinho</div>
+  </div>
+
+  <div class="evo-content on" id="evo-raposo">
+    <div class="evo-pts"><span id="pts-raposo">3</span><p>pontos de evolução disponíveis</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;margin-bottom:12px">
+      <div class="evo-stat-row"><span class="evo-stat-name">⚡ Velocidade</span><span class="evo-stat-val" id="ev-raposo-vel">95</span></div>
+      <div class="evo-stat-row"><span class="evo-stat-name">💪 Força</span><span class="evo-stat-val" id="ev-raposo-for">72</span></div>
+      <div class="evo-stat-row"><span class="evo-stat-name">❤️ Coragem</span><span class="evo-stat-val" id="ev-raposo-cor">99</span></div>
+      <div class="evo-stat-row"><span class="evo-stat-name">⚔️ Espada</span><span class="evo-stat-val" id="ev-raposo-esp">88</span></div>
+    </div>
+    <div class="evo-card"><h4>⚡ Melhorar Velocidade</h4><p>+5 de velocidade. Raposo fica ainda mais rápido que qualquer inimigo.</p><button class="btn-evoluir" onclick="evoluir('raposo','vel',5)">Evoluir (1 ponto)</button></div>
+    <div class="evo-card"><h4>💪 Melhorar Força</h4><p>+8 de força. Golpes da espada causam mais dano em batalha.</p><button class="btn-evoluir" onclick="evoluir('raposo','for',8)">Evoluir (1 ponto)</button></div>
+    <div class="evo-card"><h4>⚔️ Espada Lendária</h4><p>+10 de poder da espada. A espada da família revela seu verdadeiro potencial.</p><button class="btn-evoluir" onclick="evoluir('raposo','esp',10)">Evoluir (1 ponto)</button></div>
+  </div>
+
+  <div class="evo-content" id="evo-miles">
+    <div class="evo-pts"><span id="pts-miles">3</span><p>pontos de evolução disponíveis</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;margin-bottom:12px">
+      <div class="evo-stat-row"><span class="evo-stat-name">🏃 Agilidade</span><span class="evo-stat-val" id="ev-miles-agi">98</span></div>
+      <div class="evo-stat-row"><span class="evo-stat-name">🕸️ Teia</span><span class="evo-stat-val" id="ev-miles-tei">90</span></div>
+      <div class="evo-stat-row"><span class="evo-stat-name">🧠 Experiência</span><span class="evo-stat-val" id="ev-miles-exp">85</span></div>
+      <div class="evo-stat-row"><span class="evo-stat-name">🤝 Trabalho time</span><span class="evo-stat-val" id="ev-miles-tim">60</span></div>
+    </div>
+    <div class="evo-card"><h4>🕸️ Teia Dupla</h4><p>+8 de poder da teia. Miles dispara teia pelas duas mãos ao mesmo tempo.</p><button class="btn-evoluir" onclick="evoluir('miles','tei',8)">Evoluir (1 ponto)</button></div>
+    <div class="evo-card"><h4>⚡ Choque Máximo</h4><p>+10 de agilidade. O choque bioelétrico se torna mais poderoso.</p><button class="btn-evoluir" onclick="evoluir('miles','agi',10)">Evoluir (1 ponto)</button></div>
+    <div class="evo-card"><h4>🤝 Confiar no Time</h4><p>+15 de trabalho em time. Miles aprende a confiar no Raposo de verdade.</p><button class="btn-evoluir" onclick="evoluir('miles','tim',15)">Evoluir (1 ponto)</button></div>
+  </div>
+
+  <div class="evo-content" id="evo-robozinho">
+    <div class="evo-pts"><span id="pts-robozinho">3</span><p>pontos de evolução disponíveis</p></div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;margin-bottom:12px">
+      <div class="evo-stat-row"><span class="evo-stat-name">🔥 Fogo</span><span class="evo-stat-val" id="ev-robozinho-fog">70</span></div>
+      <div class="evo-stat-row"><span class="evo-stat-name">👁️ Visão binóculo</span><span class="evo-stat-val" id="ev-robozinho-vis">95</span></div>
+      <div class="evo-stat-row"><span class="evo-stat-name">🧠 Memória</span><span class="evo-stat-val" id="ev-robozinho-mem">88</span></div>
+    </div>
+    <div class="evo-card"><h4>🔥 Fogo Intenso</h4><p>+12 de fogo. Remove o limite de intensidade das chamas do atirador.</p><button class="btn-evoluir" onclick="evoluir('robozinho','fog',12)">Evoluir (1 ponto)</button></div>
+    <div class="evo-card"><h4>👁️ Visão Noturna</h4><p>+5 de visão. Binóculo ganha modo noturno e detecta inimigos invisíveis.</p><button class="btn-evoluir" onclick="evoluir('robozinho','vis',5)">Evoluir (1 ponto)</button></div>
+    <div class="evo-card"><h4>🧠 Fio de Memória+</h4><p>+8 de memória. O fio de memória guarda o dobro de informações.</p><button class="btn-evoluir" onclick="evoluir('robozinho','mem',8)">Evoluir (1 ponto)</button></div>
+  </div>
+</div>
+
+<!-- PICKER MODAL -->
+<div class="modal-overlay" id="picker-modal" style="display:none" onclick="closePicker(event)">
+  <div class="modal-box">
+    <h3>Escolha o lutador</h3>
+    <div class="char-pick-list">
+      <div class="char-pick-item" onclick="pickChar('raposo')"><span style="font-size:24px">🦊</span><div><div class="cpname">Raposo</div><div class="cptipo">Guerreiro · herói</div></div></div>
+      <div class="char-pick-item" onclick="pickChar('miles')"><span style="font-size:24px">🕷️</span><div><div class="cpname">Miles Morales</div><div class="cptipo">Herói substituto</div></div></div>
+      <div class="char-pick-item" onclick="pickChar('robozinho')"><span style="font-size:24px">🤖</span><div><div class="cpname">Robozinho</div><div class="cptipo">Robô parceiro</div></div></div>
+      <div class="char-pick-item" onclick="pickChar('herois')"><span style="font-size:24px">🛡️</span><div><div class="cpname">Herói da Base</div><div class="cptipo">Guardião</div></div></div>
+      <div class="char-pick-item" onclick="pickChar('veneno')"><span style="font-size:24px">☠️</span><div><div class="cpname">Veneno</div><div class="cptipo">Antagonista</div></div></div>
+    </div>
+    <button class="modal-cancel" onclick="document.getElementById('picker-modal').style.display='none'">Cancelar</button>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="bnav on" onclick="showScreen('personagens')">
+    <div class="bnav-icon">👥</div>
+    <span>Personagens</span>
+  </div>
+  <div class="bnav" onclick="showScreen('batalha')">
+    <div class="bnav-icon">⚔️</div>
+    <span>Batalha</span>
+  </div>
+  <div class="bnav" onclick="showScreen('evolucao')">
+    <div class="bnav-icon">⬆️</div>
+    <span>Evolução</span>
+  </div>
+</div>
+
+<script>
+// ---- STATE ----
+const stats = {
+  raposo: {hp:100, vel:95, for:72, cor:99, esp:88, xp:20, nivel:1, pts:3},
+  miles:  {hp:100, agi:98, tei:90, exp:85, tim:60, xp:20, nivel:1, pts:3},
+  robozinho:{hp:75, fog:70, vis:95, mem:88, xp:20, nivel:1, pts:3},
+  herois: {hp:120, forca:85, tec:92, est:90},
+  veneno: {hp:150, per:99, for:95}
+};
+const ataques = {
+  raposo:['🦊 Golpe de velocidade','⚔️ Corte da espada de diamante','💨 Dash relâmpago','🩹 Ataque com a cicatriz','⚔️ Espada lendária da família'],
+  miles:['🕸️ Lança teia','⚡ Choque bioelétrico','🏃 Esquiva ágil','🌑 Ataque invisível','🕸️ Teia dupla'],
+  robozinho:['🔥 Disparo de fogo','👁️ Scan de binóculo','💨 Ventilador tornado','🤖 Ataque surpresa','🔥 Chamas máximas'],
+  herois:['🛡️ Escudo defensivo','💨 Fumaça azul','📡 Ataque monitorado','🛡️ Golpe de guardião'],
+  veneno:['🦷 Mordida venenosa','🫧 Gosma corrosiva','👿 Ataque da cópia má','💥 Impacto brutal','☠️ Veneno total']
+};
+const poderes = {
+  raposo:95, miles:92, robozinho:78, herois:85, veneno:99
+};
+const nomes = {raposo:'Raposo',miles:'Miles',robozinho:'Robozinho',herois:'Herói',veneno:'Veneno'};
+const emojis = {raposo:'🦊',miles:'🕷️',robozinho:'🤖',herois:'🛡️',veneno:'☠️'};
+
+let pickerSlot=0, fighter1=null, fighter2=null, batalhaAtiva=false;
+
+// ---- NAVEGAÇÃO ----
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.bnav').forEach(b=>b.classList.remove('on'));
+  document.getElementById('screen-'+id).classList.add('on');
+  const idx = ['personagens','batalha','evolucao'].indexOf(id);
+  document.querySelectorAll('.bnav')[idx].classList.add('on');
+  window.scrollTo({top:0});
+}
+function showChar(id){
+  document.querySelectorAll('.cards').forEach(c=>c.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('card-'+id).classList.add('on');
+  document.querySelector('.tab[data-id="'+id+'"]').classList.add('on');
+  window.scrollTo({top:0});
+}
+
+// ---- BATALHA POKEMON ----
+let bHp1=0, bHp2=0, bMaxHp1=0, bMaxHp2=0, bVez=1, bRodada=1, bAtivo=false, bResultado=null;
+
+function openPicker(slot){
+  pickerSlot=slot;
+  document.getElementById('picker-modal').style.display='flex';
+}
+function closePicker(e){
+  if(e.target.id==='picker-modal') document.getElementById('picker-modal').style.display='none';
+}
+function pickChar(id){
+  document.getElementById('picker-modal').style.display='none';
+  if(pickerSlot===1) fighter1=id; else fighter2=id;
+  updateSlots();
+}
+function updateSlots(){
+  [1,2].forEach(i=>{
+    const f=i===1?fighter1:fighter2;
+    const slot=document.getElementById('slot'+i);
+    if(f){ slot.classList.add('filled'); slot.innerHTML=`<span style="font-size:32px">${emojis[f]}</span><h4>${nomes[f]}</h4><span style="font-size:10px;color:#888">toque para trocar</span>`; }
+  });
+  const btn=document.getElementById('btn-batalhar');
+  if(fighter1&&fighter2&&fighter1!==fighter2){ btn.disabled=false; btn.textContent='⚔️ BATALHAR!'; }
+  else if(fighter1===fighter2&&fighter1){ btn.disabled=true; btn.textContent='Escolha personagens diferentes'; }
+  else { btn.disabled=true; btn.textContent='Escolha os lutadores'; }
+}
+
+function comecarBatalha(){
+  if(!fighter1||!fighter2) return;
+  bHp1=poderes[fighter1]+20; bHp2=poderes[fighter2]+20;
+  bMaxHp1=bHp1; bMaxHp2=bHp2;
+  bVez=1; bRodada=1; bAtivo=true; bResultado=null;
+
+  document.getElementById('fase-escolha').style.display='none';
+  document.getElementById('fase-arena').style.display='block';
+  document.getElementById('area-resultado').style.display='none';
+  document.getElementById('area-inimigo').style.display='none';
+
+  document.getElementById('hp-name1').textContent=emojis[fighter1]+' '+nomes[fighter1];
+  document.getElementById('hp-name2').textContent=emojis[fighter2]+' '+nomes[fighter2];
+  document.getElementById('sprite1').textContent=emojis[fighter1];
+  document.getElementById('sprite2').textContent=emojis[fighter2];
+  document.getElementById('arena-name1').textContent=nomes[fighter1];
+  document.getElementById('arena-name2').textContent=nomes[fighter2];
+  atualizarHpBarra(1,bHp1,bMaxHp1);
+  atualizarHpBarra(2,bHp2,bMaxHp2);
+
+  setMsg(`${emojis[fighter1]} ${nomes[fighter1]} vs ${emojis[fighter2]} ${nomes[fighter2]}! Que a batalha comece!`);
+  renderAtaques();
+}
+
+function atualizarHpBarra(n,hp,max){
+  const pct=Math.max(0,Math.round(hp/max*100));
+  const bar=document.getElementById('hp-bar'+n);
+  document.getElementById('hp-num'+n).textContent=Math.max(0,hp)+' HP';
+  bar.style.width=pct+'%';
+  bar.style.background=pct>60?'#44cc44':pct>30?'#ffaa00':'#ff3333';
+}
+
+function setMsg(txt){ document.getElementById('msg-texto').textContent=txt; }
+
+function renderAtaques(){
+  const lista=document.getElementById('lista-ataques');
+  lista.innerHTML='';
+  const mAtks=ataques[fighter1];
+  const especials=[1,3]; // indices especiais
+  mAtks.forEach((atk,i)=>{
+    const btn=document.createElement('button');
+    btn.className='atk-btn'+(especials.includes(i)?' especial':'');
+    btn.textContent=atk;
+    btn.onclick=()=>jogadorAtaca(atk,i);
+    lista.appendChild(btn);
+  });
+  document.getElementById('area-ataques').style.display='block';
+}
+
+function jogadorAtaca(atkNome, idx){
+  if(!bAtivo) return;
+  document.getElementById('area-ataques').style.display='none';
+  const especial=idx===1||idx===3;
+  const base=Math.floor(poderes[fighter1]/10)+5;
+  const dmg=especial ? Math.floor(Math.random()*20)+15+base : Math.floor(Math.random()*12)+base;
+  bHp2=Math.max(0,bHp2-dmg);
+  atualizarHpBarra(2,bHp2,bMaxHp2);
+
+  // animacao
+  const s1=document.getElementById('sprite1');
+  s1.style.animation='bounce 0.3s ease';
+  setTimeout(()=>s1.style.animation='',400);
+  mostrarDmg(especial?`✨-${dmg}`:'-'+dmg, '#ff8888');
+
+  const msg=especial
+    ? `${emojis[fighter1]} ${nomes[fighter1]} usa ${atkNome}! ATAQUE ESPECIAL! ${dmg} de dano crítico!`
+    : `${emojis[fighter1]} ${nomes[fighter1]} usa ${atkNome}! ${dmg} de dano!`;
+  setMsg(msg);
+  narrarAutomatico(msg);
+
+  setTimeout(()=>{
+    if(bHp2<=0){ encerrarBatalha(fighter1,fighter2); return; }
+    document.getElementById('area-inimigo').style.display='block';
+  },800);
+}
+
+function inimigoAtaca(){
+  document.getElementById('area-inimigo').style.display='none';
+  const mAtks=ataques[fighter2];
+  const idx=Math.floor(Math.random()*mAtks.length);
+  const atkNome=mAtks[idx];
+  const especial=idx===1||idx===3;
+  const base=Math.floor(poderes[fighter2]/10)+5;
+  const dmg=especial ? Math.floor(Math.random()*20)+15+base : Math.floor(Math.random()*12)+base;
+  bHp1=Math.max(0,bHp1-dmg);
+  atualizarHpBarra(1,bHp1,bMaxHp1);
+
+  const s2=document.getElementById('sprite2');
+  s2.style.animation='bounce 0.3s ease';
+  setTimeout(()=>s2.style.animation='',400);
+  const s1=document.getElementById('sprite1');
+  s1.style.animation='shake 0.3s ease';
+  setTimeout(()=>s1.style.animation='',400);
+  mostrarDmg(especial?`✨-${dmg}`:'-'+dmg,'#88aaff');
+
+  const msg=especial
+    ? `${emojis[fighter2]} ${nomes[fighter2]} usa ${atkNome}! ATAQUE ESPECIAL! ${dmg} de dano crítico em ${nomes[fighter1]}!`
+    : `${emojis[fighter2]} ${nomes[fighter2]} usa ${atkNome}! ${dmg} de dano em ${nomes[fighter1]}!`;
+  setMsg(msg);
+  narrarAutomatico(msg);
+
+  bRodada++;
+  setTimeout(()=>{
+    if(bHp1<=0){ encerrarBatalha(fighter2,fighter1); return; }
+    if(bRodada>8){ encerrarBatalha(bHp1>bHp2?fighter1:fighter2, bHp1>bHp2?fighter2:fighter1); return; }
+    renderAtaques();
+  },800);
+}
+
+function mostrarDmg(txt, cor){
+  const badge=document.getElementById('dmg-badge');
+  badge.textContent=txt; badge.style.color=cor; badge.style.opacity='1';
+  setTimeout(()=>{ badge.style.opacity='0'; },1200);
+}
+
+function encerrarBatalha(vencedor, perdedor){
+  bAtivo=false;
+  bResultado={vencedor,perdedor};
+  const msg=`${emojis[vencedor]} ${nomes[vencedor]} venceu a batalha! ${nomes[perdedor]} foi derrotado!`;
+  setMsg(msg);
+  document.getElementById('resultado-emoji').textContent=emojis[vencedor];
+  document.getElementById('resultado-texto').textContent=`${nomes[vencedor]} VENCEU!`;
+  document.getElementById('resultado-sub').textContent=`${nomes[perdedor]} foi derrotado após ${bRodada} rodadas.`;
+  document.getElementById('area-resultado').style.display='block';
+  document.getElementById('area-ataques').style.display='none';
+  document.getElementById('area-inimigo').style.display='none';
+  // XP
+  if(stats[vencedor]){
+    stats[vencedor].xp=Math.min(100,(stats[vencedor].xp||20)+30);
+    if(stats[vencedor].xp>=100){ stats[vencedor].nivel=(stats[vencedor].nivel||1)+1; stats[vencedor].xp=10; stats[vencedor].pts=(stats[vencedor].pts||0)+2; }
+    atualizarXP(vencedor);
+  }
+  narrarAutomatico(`${nomes[vencedor]} venceu a batalha! ${nomes[perdedor]} foi derrotado após ${bRodada} rodadas. ${nomes[vencedor]} ganhou experiência!`);
+}
+
+function resetarBatalha(){
+  fighter1=null; fighter2=null;
+  document.getElementById('fase-escolha').style.display='block';
+  document.getElementById('fase-arena').style.display='none';
+  document.getElementById('slot1').classList.remove('filled');
+  document.getElementById('slot2').classList.remove('filled');
+  document.getElementById('slot1').innerHTML='<span style="font-size:28px">❓</span><h4>Lutador 1</h4><span>toque para escolher</span>';
+  document.getElementById('slot2').innerHTML='<span style="font-size:28px">❓</span><h4>Lutador 2</h4><span>toque para escolher</span>';
+  document.getElementById('btn-batalhar').disabled=true;
+  document.getElementById('btn-batalhar').textContent='Escolha os lutadores';
+}
+
+function narrarMensagem(){
+  const txt=document.getElementById('msg-texto').textContent;
+  if(txt) falarTexto(txt);
+}
+function narrarResultado(){
+  if(!bResultado) return;
+  falarTexto(`${nomes[bResultado.vencedor]} venceu a batalha contra ${nomes[bResultado.perdedor]}! Parabéns ao vencedor!`);
+}
+function narrarAutomatico(txt){
+  // iPad/Safari costuma bloquear ou travar narração automática.
+  // Mantemos o botão "ouvir" manual funcionando, mas sem falar sozinho durante a batalha.
+  return;
+}
+function falarTexto(txt){
+  try{
+    if(!window.speechSynthesis){ alert('Navegador não suporta voz.'); return; }
+    window.speechSynthesis.cancel();
+    const utt=new SpeechSynthesisUtterance(txt);
+    utt.lang='pt-BR'; utt.rate=0.9; utt.pitch=1.05;
+    window.speechSynthesis.speak(utt);
+  }catch(e){
+    console.log('Voz bloqueada no Safari/iPad:', e);
+  }
+}
+// alias para compatibilidade
+function iniciarBatalha(){ comecarBatalha(); }
+
+function atualizarXP(id){
+  const s=stats[id];
+  if(!s) return;
+  const pct=(s.xp||20)+'%';
+  const el=document.getElementById('xp-'+id);
+  if(el) el.style.width=pct;
+  const el2=document.getElementById('xp-txt-'+id);
+  if(el2) el2.textContent=(s.xp||20)+' / 100';
+  const el3=document.getElementById('nivel-'+id);
+  if(el3) el3.textContent=s.nivel||1;
+  const el4=document.getElementById('pts-'+id);
+  if(el4) el4.textContent=s.pts||0;
+}
+
+// ---- EVOLUÇÃO ----
+function showEvo(id){
+  document.querySelectorAll('.evo-content').forEach(e=>e.classList.remove('on'));
+  document.querySelectorAll('.evo-tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('evo-'+id).classList.add('on');
+  const tabs=document.querySelectorAll('.evo-tab');
+  const map=['raposo','miles','robozinho'];
+  tabs[map.indexOf(id)].classList.add('on');
+}
+
+function evoluir(char, stat, amount){
+  const s=stats[char];
+  if(!s || (s.pts||0)<=0) return;
+  s.pts--;
+  s[stat]=(s[stat]||0)+amount;
+  // atualiza UI evolucao
+  const evEl=document.getElementById('ev-'+char+'-'+stat);
+  if(evEl) evEl.textContent=s[stat];
+  // atualiza UI personagem
+  const svEl=document.getElementById('sv-'+char+'-'+stat);
+  if(svEl) svEl.textContent=s[stat];
+  const sbEl=document.getElementById('sb-'+char+'-'+stat);
+  if(sbEl) sbEl.style.width=Math.min(100,s[stat])+'%';
+  const ptsEl=document.getElementById('pts-'+char);
+  if(ptsEl) ptsEl.textContent=s.pts;
+  // feedback
+  const btns=document.querySelectorAll(`#evo-${char} .btn-evoluir`);
+  if(s.pts<=0) btns.forEach(b=>b.disabled=true);
+}
+
+// ---- VOZ ----
+let vozAtual = null;
+let btnAtual = null;
+
+function falar(btn, texto){
+  if(!window.speechSynthesis){ alert('Seu navegador não suporta voz.'); return; }
+  if(vozAtual && window.speechSynthesis.speaking){
+    window.speechSynthesis.cancel();
+    if(btnAtual===btn){ btnAtual=null; vozAtual=null; btn.classList.remove('falando'); btn.innerHTML='<span class="voz-icon">🔊</span> ouvir'; return; }
+  }
+  if(btnAtual) { btnAtual.classList.remove('falando'); btnAtual.innerHTML='<span class="voz-icon">🔊</span> ouvir'; }
+  const utt = new SpeechSynthesisUtterance(texto);
+  utt.lang='pt-BR'; utt.rate=0.92; utt.pitch=1.05;
+  utt.onend=()=>{ btn.classList.remove('falando'); btn.innerHTML='<span class="voz-icon">🔊</span> ouvir'; btnAtual=null; };
+  utt.onerror=()=>{ btn.classList.remove('falando'); btn.innerHTML='<span class="voz-icon">🔊</span> ouvir'; btnAtual=null; };
+  btn.classList.add('falando'); btn.innerHTML='<span class="voz-icon">🔉</span> pausar';
+  btnAtual=btn; vozAtual=utt;
+  try{ window.speechSynthesis.speak(utt); }catch(e){ console.log('Voz bloqueada no Safari/iPad:', e); }
+}
+
+
+
+</script>
+</body>
+</html>
